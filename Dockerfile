@@ -10,4 +10,5 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
+COPY audio.ogg ./audio.ogg
 CMD ["node", "dist/main.js"]
