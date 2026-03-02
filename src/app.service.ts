@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Groq from 'groq-sdk';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { ConfigService } from '@nestjs/config';
 
@@ -33,25 +31,13 @@ export class AppService {
     this.logger.log('AppService инициализирован');
   }
 
-  async transcribe() {
-    const filePath = path.join(process.cwd(), 'audio.ogg');
-
-    this.logger.log(`Начинаем транскрибацию файла: ${filePath}`);
+  async transcribe(file: Express.Multer.File) {
+    this.logger.log(`Начинаем транскрибацию файла: ${file.originalname}, размер: ${file.size} байт`);
 
     try {
-      // Проверяем существует ли файл
-      if (!fs.existsSync(filePath)) {
-        this.logger.error(`Файл не найден: ${filePath}`);
-        return { error: 'Файл не найден' };
-      }
-
-      const fileBuffer = fs.readFileSync(filePath);
-      this.logger.log(`Файл прочитан, размер: ${fileBuffer.length} байт`);
-
-      this.logger.log('Отправка запроса в Groq API...');
       const response = await this.groq.audio.transcriptions.create({
         model: 'whisper-large-v3-turbo',
-        file: await Groq.toFile(fileBuffer, 'audio.ogg'),
+        file: await Groq.toFile(file.buffer, file.originalname),
         response_format: 'verbose_json',
       });
 
@@ -62,15 +48,13 @@ export class AppService {
       }
 
       return response;
-
     } catch (error) {
       this.logger.error('Ошибка при транскрибации:', error);
 
-      // Возвращаем понятную ошибку
       return {
         error: 'Не удалось выполнить транскрибацию',
         message: error.message,
-        status: error.status || 500
+        status: error.status || 500,
       };
     }
   }

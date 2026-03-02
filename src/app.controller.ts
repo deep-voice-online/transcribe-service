@@ -1,12 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  async transcribe() {
-    return await this.appService.transcribe();
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  async transcribe(@UploadedFile() file: Express.Multer.File) {
+    return await this.appService.transcribe(file);
   }
 }
